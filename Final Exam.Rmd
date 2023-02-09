@@ -36,7 +36,29 @@ save(data, file = "Data/kiggs.sav")
 
 ```
 
-Question 3 (a) : 
+Question 3 (a) : Check that the variables E070M, E070V, E072, E074 are all factors. If they are not,
+transform them into factors
+```{r}
+#Checking whether the variables E070M, E070V, E072, E074 are all factors or not
+is.factor(kiggs$E070M)
+is.factor(kiggs$E070V)
+is.factor(kiggs$E072)
+is.factor(kiggs$E074)
+```
+Question 3 (a) : Set the value "has not breastfed" of variable E074 to NA for all children.
+```{r}
+#Setting the value "has not breastfed" of variable E074 to NA for all children
+
+kiggs["E074"][kiggs["E074"] == "has not breastfed"] <- "NA"
+
+```
+Question 3 (a) : Delete this now empty factor level from the variable
+```{r}
+kiggs
+```
+
+
+
 
 
 
