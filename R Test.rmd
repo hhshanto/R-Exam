@@ -1,0 +1,356 @@
+```{r}
+library("tidyverse")
+#Loading the Data
+
+students <- readxl::read_excel("Data/data_students.xlsx")
+
+faculty <- readxl::read_excel("Data/data_faculty.xlsx")
+
+```
+
+```{r}
+#Checking the data tables
+students
+faculty
+```
+
+```{r}
+#Counting the NA values in Dataset
+yes_count <- sum(students$age == "NA")
+yes_count
+```
+```{r}
+#Removing the rows with NA values
+students_new<-students[!(students$age=="NA"),]
+students_new
+```
+```{r}
+#Checking agian whether NA still available or not
+yes_count <- sum(students_new$age == "NA")
+yes_count
+```
+
+So, we do not have any NA values in our database.
+
+```{r}
+# Counting the number of unique values in each column
+unique_counts_students <- sapply(students_new, function(x) length(unique(x)))
+unique_counts_faculty <- sapply(faculty, function(x) length(unique(x)))
+
+# Viewing the counts
+unique_counts_students
+unique_counts_faculty
+```
+```{r}
+#Checking the datatypes of the columns
+str(students_new)
+str(faculty)
+```
+
+The Data are in character form, So at first we have to make it numeric.
+
+```{r}
+# Converting the character columns to numeric
+
+students_new$age <- as.numeric(students_new$age)
+
+# Converting the country column to a factor
+students_new$cob <- factor(students_new$cob)
+#levels to see which number is assigned to which value
+levels(students_new$cob)
+# Converting the factor to a numeric vector
+students_new$cob <- as.numeric(students_new$cob)
+
+
+students_new$course <- factor(students_new$course)
+students_new$course <- as.numeric(students_new$course)
+
+
+students_new$faculty <- factor(students_new$faculty)
+levels(students_new$faculty)
+students_new$faculty <- as.numeric(students_new$faculty)
+
+
+students_new$gpa_2010 <- as.numeric(students_new$gpa_2010)
+students_new$gpa_2011 <- as.numeric(students_new$gpa_2011)
+students_new$gpa_2012 <- as.numeric(students_new$gpa_2012)
+students_new$gpa_2013 <- as.numeric(students_new$gpa_2013)
+students_new$gpa_2014 <- as.numeric(students_new$gpa_2014)
+students_new$gpa_2015 <- as.numeric(students_new$gpa_2015)
+students_new$gpa_2016 <- as.numeric(students_new$gpa_2016)
+students_new$gpa_2017 <- as.numeric(students_new$gpa_2017)
+students_new$gpa_2018 <- as.numeric(students_new$gpa_2018)
+students_new$gpa_2019 <- as.numeric(students_new$gpa_2019)
+students_new$gpa_2020 <- as.numeric(students_new$gpa_2020)
+
+students_new$job <- factor(students_new$job)
+students_new$job <- as.numeric(students_new$job)
+
+students_new$lifesat <- as.numeric(students_new$lifesat)
+students_new$like <- as.numeric(students_new$like)
+
+students_new$relationship <- factor(students_new$relationship)
+levels(students_new$relationship)
+students_new$relationship <- as.numeric(students_new$relationship)
+
+students_new$sex <- factor(students_new$sex)
+levels(students_new$sex)
+students_new$sex <- as.numeric(students_new$sex)
+
+
+students_new$term <- as.numeric(students_new$term)
+
+students_new$university <- factor(students_new$university)
+students_new$university <- as.numeric(students_new$university)
+
+
+faculty$faculty <- factor(faculty$faculty)
+levels(faculty$faculty)
+faculty$faculty <- as.numeric(faculty$faculty)
+
+# Checking the data types of the columns
+str(students_new)
+
+```
+
+
+
+
+1.	Create a summary table with a) the percentage of non-German students, b) average life satisfaction, c) percentage of students in a relationship, d) sex ratio, e) percentage of students over 30, f) average gpa in 2010 and g) average number of terms. All variables should be displayed by faculty. 
+```{r}
+# Calculating the summary statistics by faculty
+summary_table <- students_new %>%
+  group_by(faculty) %>%
+  summarise(
+    Non_German = sum(cob != 3) / n() * 100, # 3 represents Germany
+    Avg_Life_Satisfaction = mean(lifesat),
+    In_Relationship = sum(relationship == 1) / n() * 100, #1 represents In a Relationship
+    Sex_Ratio = sum(sex == 1) / sum(sex == 2),
+    Over_30 = sum(age > 30) / n() * 100,
+    Avg_GPA_2010 = mean(gpa_2010),
+    Avg_Terms = mean(term)
+  )
+
+# Viewing the summary table
+summary_table
+
+```
+
+
+
+2.	Create a graph showing differences in average life satisfaction by faculty and relationship status. 
+```{r}
+library(ggplot2)
+
+# Calculating the average life satisfaction by faculty and relationship status
+data_summary <- students_new %>%
+  group_by(faculty, relationship) %>%
+  summarise(Avg_Life_Satisfaction = mean(lifesat))
+
+# Creating a bar chart showing the differences in average life satisfaction
+ggplot(data_summary, aes(x = faculty, y = Avg_Life_Satisfaction, fill = relationship)) +
+  geom_col(position = "dodge") +
+  labs(x = "Faculty", y = "Average Life Satisfaction", fill = "Relationship Status")
+
+```
+
+
+
+3.	Combine faculty data with student data into one dataset. Show differences in the average cost of the career by faculty and job status.
+```{r}
+# Merging the student and faculty data by faculty
+data <- merge(students_new, faculty, by = "faculty")
+
+# Calculating the average cost by faculty and job status
+data_summary <- data %>%
+  group_by(faculty, job) %>%
+  summarise(Avg_Cost = mean(costs))
+
+# Creating a bar chart showing the differences in average cost
+ggplot(data_summary, aes(x = faculty, y = Avg_Cost, fill = job)) +
+  geom_col(position = "dodge") +
+  labs(x = "Faculty", y = "Average Cost", fill = "Job Status")
+
+```
+
+
+4.	Create a graph showing the association between life satisfaction and age.
+```{r}
+# Creating a scatter plot showing the association between life satisfaction and age
+ggplot(students_new, aes(x = age, y = lifesat)) +
+  geom_point() +
+  labs(x = "Age", y = "Life Satisfaction")
+
+```
+
+
+5.	Create a dummy variable for students with a gpa above 2 for each year (using a loop). 
+```{r}
+# Creating a dummy variable for each year
+for (year in 2010:2020) {
+  # Creating the column name for the current year
+  column_name <- paste0("gpa_", year)
+  
+  # Creating the dummy variable for the current year
+  students_new[[paste0(column_name, "_above_2")]] <- ifelse(students_new[[column_name]] > 2, 1, 0)
+}
+
+# Viewing the first few rows of the data
+head(students_new)
+
+```
+
+
+Linear regression
+1.	Apply Linear Regression models to test whether there is a statistically significant relationship between life satisfaction and relationship status (controlling for age and sex).
+```{r}
+# Fitting a linear regression model
+model <- lm(lifesat ~ relationship + age + sex, data = students_new)
+
+# Viewing the summary of the model
+summary(model)
+
+```
+In the summary of the model, the p-value associated with the relationship variable is 0.2945, which is greater than the common significance level of 0.05. This means that we cannot reject the null hypothesis that there is no relationship between life satisfaction and relationship status while controlling for age and sex.
+
+
+
+
+
+2.	Run appropriate regression diagnostics tests
+
+```{r}
+# Plotting the residuals vs. fitted values to check for linearity and homoscedasticity
+plot(model, which = 1)
+
+# Plotting the QQ plot of residuals to check for normality
+plot(model, which = 2)
+
+# Plotting the scale-location plot to check for homoscedasticity
+plot(model, which = 3)
+
+# Plotting the residuals vs. leverage plot to check for influential observations
+plot(model, which = 5)
+
+```
+
+
+
+
+3.	Plot the effects of relationship status, age and gender using a coefficient plot
+```{r}
+# loading the arm package
+library(arm)
+
+
+# Plotting the coefficients using coefplot
+coefplot(model)
+
+```
+
+
+4.	Provide a formatted regression table for the overall model output
+```{r}
+#loading the stargazer package
+library(stargazer)
+
+# Creating a formatted regression table using stargazer
+stargazer(model, type = "text")
+
+```
+
+
+5.	Predict the average life satisfaction for male students in a relationship and, separately, the average life satisfaction for female students. 
+```{r}
+# Using the predict function to make predictions
+predictions <- predict(model)
+
+# Adding the predictions to the students_new dataset
+students_new$predicted_lifesat <- predictions
+
+# Calculating the mean predicted life satisfaction for each group
+aggregate(predicted_lifesat ~ relationship + sex, data = students_new, FUN = mean)
+
+
+
+```
+Here, 1 Represent Female and 2 Represents Male
+And, 1 Represent In a Relationship and 2 Represents Single
+
+
+
+
+
+Logistic regression
+
+1.	Columns I to O represent information on Grade points averages (GPA) by year. Dichotomize these variables (scores below 2 are “good”, scores below 2 are “bad”).
+```{r}
+# Create new binary variables for each GPA column
+students_new$gpa_2010_bin <- ifelse(students_new$gpa_2010 < 2, "good", "bad")
+students_new$gpa_2011_bin <- ifelse(students_new$gpa_2011 < 2, "good", "bad")
+students_new$gpa_2012_bin <- ifelse(students_new$gpa_2012 < 2, "good", "bad")
+students_new$gpa_2013_bin <- ifelse(students_new$gpa_2013 < 2, "good", "bad")
+students_new$gpa_2014_bin <- ifelse(students_new$gpa_2014 < 2, "good", "bad")
+students_new$gpa_2015_bin <- ifelse(students_new$gpa_2015 < 2, "good", "bad")
+students_new$gpa_2016_bin <- ifelse(students_new$gpa_2016 < 2, "good", "bad")
+students_new$gpa_2017_bin <- ifelse(students_new$gpa_2017 < 2, "good", "bad")
+students_new$gpa_2018_bin <- ifelse(students_new$gpa_2018 < 2, "good", "bad")
+students_new$gpa_2019_bin <- ifelse(students_new$gpa_2019 < 2, "good", "bad")
+students_new$gpa_2020_bin <- ifelse(students_new$gpa_2020 < 2, "good", "bad")
+
+```
+
+
+2.	Use logistic regression to test the association between having a “good” GPA and faculty, sex and age.
+
+```{r}
+# Creating a new binary variable for gpa_2010 where value is 1 if the student’s GPA in 2010 was below 2 and a value of 0 otherwise. 
+students_new$gpa_2010_bin <- ifelse(students_new$gpa_2010 < 2, 1, 0)
+
+# Fitting a logistic regression model
+model <- glm(gpa_2010_bin ~ faculty + sex + age, data = students_new, family = binomial)
+
+# Viewing the summary of the model
+summary(model)
+
+
+```
+
+3.	Estimate the model for all available years and report the results in one graph.
+
+```{r}
+library(broom)
+library(ggplot2)
+library(arm)
+# Create new binary variables for each GPA column
+students_new$gpa_2010_bin <- ifelse(students_new$gpa_2010 < 2, 1, 0)
+students_new$gpa_2011_bin <- ifelse(students_new$gpa_2011 < 2, 1, 0)
+students_new$gpa_2012_bin <- ifelse(students_new$gpa_2012 < 2, 1, 0)
+students_new$gpa_2013_bin <- ifelse(students_new$gpa_2013 < 2, 1, 0)
+students_new$gpa_2014_bin <- ifelse(students_new$gpa_2014 < 2, 1, 0)
+students_new$gpa_2015_bin <- ifelse(students_new$gpa_2015 < 2, 1, 0)
+students_new$gpa_2016_bin <- ifelse(students_new$gpa_2016 < 2, 1, 0)
+students_new$gpa_2017_bin <- ifelse(students_new$gpa_2017 < 2, 1, 0)
+students_new$gpa_2018_bin <- ifelse(students_new$gpa_2018 < 2, 1, 0)
+students_new$gpa_2019_bin <- ifelse(students_new$gpa_2019 < 2, 1, 0)
+students_new$gpa_2020_bin <- ifelse(students_new$gpa_2020 < 2, 1, 0)
+
+# Creating a vector of the binary GPA variables
+gpa_vars <- c("gpa_2010_bin", "gpa_2011_bin", "gpa_2012_bin", "gpa_2013_bin", "gpa_2014_bin", "gpa_2015_bin", "gpa_2016_bin", "gpa_2017_bin", "gpa_2018_bin", "gpa_2019_bin", "gpa_2020_bin")
+
+# Fitting a separate logistic regression model for each year
+models <- lapply(gpa_vars, function(x) {
+    glm(as.formula(paste0(x," ~ faculty + sex + age")), data = students_new,family = binomial)
+})
+
+# Extracting the estimated coefficients from each model
+coefs <- sapply(models, function(x) coef(x))
+rownames(coefs) <- c("(Intercept)", "faculty", "sexMale", "age")
+
+# Creating a line plot that shows the estimated coefficients for each year
+matplot(t(coefs), type = "l", lty = 1, col = 1:4, ylab = "Estimated Coefficient")
+legend("topleft", legend = rownames(coefs), col = 1:4, lty = 1)
+
+
+```
+
